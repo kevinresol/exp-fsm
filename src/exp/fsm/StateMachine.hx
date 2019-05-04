@@ -33,10 +33,11 @@ class StateMachine<T, S:State<T>> {
 					
 				case nextState:
 					if(current == null || canTransit(current, to)) {
-						switch states.get(current) {
-							case null:
-							case currentState: currentState.onDeactivate();
-						}
+						if(current != null)
+							switch states.get(current) {
+								case null:
+								case currentState: currentState.onDeactivate();
+							}
 						nextState.onActivate();
 						current = to;
 						Success(Noise);
