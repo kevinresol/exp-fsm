@@ -35,6 +35,8 @@ class StateMachine<T, S:State<T>> {
 		return
 			if(current.key == to)
 				Success(Noise);
+			else if(!states.exists(to)) 
+				Failure(new Error('State key "$to" does not exist'));
 			else if(canTransit(to)) {
 				if(current != null) current.onDeactivate();
 				current = states.get(to).state;
