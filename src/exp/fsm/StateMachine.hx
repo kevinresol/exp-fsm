@@ -1,56 +1,54 @@
 package exp.fsm;
 
+import haxe.ds.ReadOnlyArray;
+
 using tink.CoreApi;
 
 class StateMachine<T, S:State<T>> {
-	public var current(default, null):T;
+	public var current(default, null):S;
 	
-	var states:Map<T, S>;
-	var nexts:Map<T, Array<T>>;
+	final states:Map<T, StateData<T, S>>;
 	
 	@:generic
-	public static inline function create<T, S:State<T>>() {
-		return new StateMachine<T, S>([], []);
+	public static inline function create<T, S:State<T>>(init, rest) {
+		return new StateMachine<T, S>([], init, rest);
 	}
 	
-	function new(states, nexts) {
-		this.states = states;
-		this.nexts = nexts;
+	function new(map, init:StateData<T, S>, rest:ReadOnlyArray<StateData<T, S>>) {
+		states = map;
+		
+		add(init);
+		for(data in rest) add(data);
+		
+		// init
+		current = init.state;
+		current.onActivate();
 	}
 	
-	public function add(state:S, next:Array<T>) {
-		states.set(state.type, state);
-		nexts.set(state.type, next.copy());
+	function add(data:StateData<T, S>) {
+		var key = data.state.key;
+		if(states.exists(key)) throw 'Duplicate state key: $key';
+		states.set(key, data);
 	}
 	
 	public function transit(to:T):Outcome<Noise, Error> {
 		return
-			if(current == to)
+			if(current.key == to)
 				Success(Noise);
-			else switch states.get(to) {
-				case null:
-					Failure(new Error('State "$to" doesn\'t exist'));
-					
-				case nextState:
-					if(current == null || canTransit(current, to)) {
-						if(current != null)
-							switch states.get(current) {
-								case null:
-								case currentState: currentState.onDeactivate();
-							}
-						nextState.onActivate();
-						current = to;
-						Success(Noise);
-					} else {
-						Failure(new Error('Unable to transit from "$current" to "$to"'));
-					}
+			else if(canTransit(to)) {
+				if(current != null) current.onDeactivate();
+				current = states.get(to).state;
+				current.onActivate();
+				Success(Noise);
+			} else {
+				Failure(new Error('Unable to transit from "${current.key}" to "$to"'));
 			}
 	}
 	
-	function canTransit(from:T, to:T) {
-		return switch nexts.get(from) {
+	public function canTransit(to:T) {
+		return switch states.get(current.key) {
 			case null: false;
-			case v: v.indexOf(to) != -1;
+			case v: v.next.indexOf(to) != -1;
 		}
 	}
 }

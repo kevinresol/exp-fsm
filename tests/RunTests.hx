@@ -1,5 +1,6 @@
 package ;
 
+import haxe.io.BytesData;
 import tink.unit.*;
 import tink.testrunner.*;
 import exp.fsm.*;
@@ -19,18 +20,35 @@ class RunTests {
 	
 	public function test() {
 		
-		var fsm:StateMachine<String, TestState> = StateMachine.create();
 		var logs = [];
 		function log(name:String, event:String) logs.push('$name:$event');
-		fsm.add(new TestState('foo', log), ['bar']);
-		fsm.add(new TestState('bar', log), ['baz']);
-		fsm.add(new TestState('baz', log), ['foo']);
+		function data(key, next) return new StateData(new TestState(key, log), next);
+		var fsm = StateMachine.create(
+			data('foo', ['bar']),
+			[
+				data('bar', ['baz']),
+				data('baz', ['foo']),
+			]
+		);
+		asserts.assert(fsm.current.key == 'foo');
+		asserts.assert(fsm.canTransit('bar'));
+		asserts.assert(!fsm.canTransit('baz'));
 		
-		asserts.assert(fsm.transit('foo').isSuccess());
 		asserts.assert(!fsm.transit('baz').isSuccess());
+		asserts.assert(fsm.current.key == 'foo');
+		
 		asserts.assert(fsm.transit('bar').isSuccess());
+		asserts.assert(fsm.current.key == 'bar');
+		asserts.assert(fsm.canTransit('baz'));
+		asserts.assert(!fsm.canTransit('foo'));
+		
 		asserts.assert(fsm.transit('baz').isSuccess());
+		asserts.assert(fsm.current.key == 'baz');
+		asserts.assert(fsm.canTransit('foo'));
+		asserts.assert(!fsm.canTransit('bar'));
+		
 		asserts.assert(logs.join(',') == 'foo:enter,foo:exit,bar:enter,bar:exit,baz:enter');
+		
 		return asserts.done();
 	}
 	
@@ -38,10 +56,10 @@ class RunTests {
 
 class TestState extends State<String> {
 	var log:String->String->Void;
-	public function new(type, log) {
-		super(type);
+	public function new(key, log) {
+		super(key);
 		this.log = log;
 	}
-	override function onActivate():Void log(type, 'enter');
-	override function onDeactivate():Void log(type, 'exit');
+	override function onActivate():Void log(key, 'enter');
+	override function onDeactivate():Void log(key, 'exit');
 }
