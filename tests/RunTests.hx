@@ -22,12 +22,11 @@ class RunTests {
 		
 		var logs = [];
 		function log(name:String, event:String) logs.push('$name:$event');
-		function data(key, next) return new StateData(new TestState(key, log), next);
 		var fsm = StateMachine.create(
-			data('foo', ['bar']),
+			new TestState('foo', ['bar'], log),
 			[
-				data('bar', ['baz']),
-				data('baz', ['foo']),
+				new TestState('bar', ['baz'], log),
+				new TestState('baz', ['foo'], log),
 			]
 		);
 		asserts.assert(fsm.current.key == 'foo');
@@ -56,8 +55,8 @@ class RunTests {
 
 class TestState extends State<String> {
 	var log:String->String->Void;
-	public function new(key, log) {
-		super(key);
+	public function new(key, next, log) {
+		super(key, next);
 		this.log = log;
 	}
 	override function onActivate():Void log(key, 'enter');

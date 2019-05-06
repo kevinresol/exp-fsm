@@ -1,8 +1,14 @@
 package exp.fsm;
 
+import haxe.ds.ReadOnlyArray;
+
 class State<T> {
 	public final key:T;
-	public function new(key) this.key = key;
+	public final next:ReadOnlyArray<T>;
+	public function new(key, next) {
+		this.key = key;
+		this.next = next;
+	}
 	public function onActivate():Void {}
 	public function onDeactivate():Void {}
 }
