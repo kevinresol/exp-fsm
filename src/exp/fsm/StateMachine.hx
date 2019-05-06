@@ -10,18 +10,17 @@ class StateMachine<T, S:State<T>> {
 	final states:Map<T, S>;
 	
 	@:generic
-	public static inline function create<T, S:State<T>>(init, rest) {
-		return new StateMachine<T, S>([], init, rest);
+	public static inline function create<T, S:State<T>>(states) {
+		return new StateMachine<T, S>([], states);
 	}
 	
-	function new(map, init:S, rest:ReadOnlyArray<S>) {
+	function new(map, list:ReadOnlyArray<S>) {
 		states = map;
 		
-		add(init);
-		for(data in rest) add(data);
+		for(state in list) add(state);
 		
 		// init
-		current = init;
+		current = list[0];
 		current.onActivate();
 	}
 	

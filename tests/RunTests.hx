@@ -22,13 +22,11 @@ class RunTests {
 		
 		var logs = [];
 		function log(name:String, event:String) logs.push('$name:$event');
-		var fsm = StateMachine.create(
+		var fsm = StateMachine.create([
 			new TestState('foo', ['bar'], log),
-			[
-				new TestState('bar', ['baz'], log),
-				new TestState('baz', ['foo'], log),
-			]
-		);
+			new TestState('bar', ['baz'], log),
+			new TestState('baz', ['foo'], log),
+		]);
 		asserts.assert(fsm.current.key == 'foo');
 		asserts.assert(fsm.canTransit('bar'));
 		asserts.assert(!fsm.canTransit('baz'));
