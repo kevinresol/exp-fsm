@@ -1,12 +1,15 @@
 package exp.fsm;
 
 import haxe.ds.ReadOnlyArray;
+import tink.state.State as Value;
+import tink.state.Observable;
 
 using tink.CoreApi;
 
 class StateMachine<T, S:State<T>> {
-	public var current(default, null):S;
+	public var current(get, never):S;
 	
+	final value:Value<S>;
 	final states:Map<T, S>;
 	
 	@:generic
@@ -16,15 +19,15 @@ class StateMachine<T, S:State<T>> {
 	
 	function new(map, list:ReadOnlyArray<S>) {
 		states = map;
-		
 		for(state in list) add(state);
 		
 		// init
-		current = list[0];
-		current.onActivate();
+		var init = list[0];
+		value = new Value(init);
+		init.onActivate();
 	}
 	
-	function add(state:S) {
+	inline function add(state:S) {
 		var key = state.key;
 		if(states.exists(key)) throw 'Duplicate state key: $key';
 		states.set(key, state);
@@ -38,8 +41,9 @@ class StateMachine<T, S:State<T>> {
 				Failure(new Error('State key "$to" does not exist'));
 			else if(canTransit(to)) {
 				if(current != null) current.onDeactivate();
-				current = states.get(to);
-				current.onActivate();
+				var next = states.get(to);
+				value.set(next);
+				next.onActivate();
 				Success(Noise);
 			} else {
 				Failure(new Error('Unable to transit from "${current.key}" to "$to"'));
@@ -52,4 +56,7 @@ class StateMachine<T, S:State<T>> {
 			case v: v.next.indexOf(to) != -1;
 		}
 	}
+	
+	public inline function observe():Observable<S> return value;
+	inline function get_current() return value.value;
 }
