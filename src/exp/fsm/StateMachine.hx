@@ -36,7 +36,7 @@ class StateMachine<T, S:State<T>> {
 				Success(Noise);
 			else if(!states.exists(to)) 
 				Failure(new Error('State key "$to" does not exist'));
-			else if(canTransit(to)) {
+			else if(canTransitTo(to)) {
 				if(current != null) current.onDeactivate();
 				current = states.get(to);
 				current.onActivate();
@@ -46,10 +46,7 @@ class StateMachine<T, S:State<T>> {
 			}
 	}
 	
-	public function canTransit(to:T) {
-		return switch states.get(current.key) {
-			case null: false;
-			case v: v.next.indexOf(to) != -1;
-		}
+	public inline function canTransitTo(key:T) {
+		return current.canTransitTo(key);
 	}
 }
