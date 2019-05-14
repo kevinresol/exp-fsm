@@ -1,10 +1,10 @@
 package ;
 
 import haxe.io.BytesData;
-import haxe.ds.ReadOnlyArray;
 import tink.unit.*;
 import tink.testrunner.*;
-import exp.fsm.*;
+import exp.fsm.StateMachine;
+import exp.fsm.State;
 
 using tink.CoreApi;
 
@@ -52,16 +52,12 @@ class RunTests {
 	
 }
 
-class TestState implements State<String> {
-	public final key:String;
-	final next:ReadOnlyArray<String>;
+class TestState extends BasicState<String> {
 	final log:String->String->Void;
 	public function new(key, next, log) {
-		this.key = key;
-		this.next = next;
+		super(key, next);
 		this.log = log;
 	}
-	public function canTransitTo(key:String) return next.indexOf(key) != -1;
-	public function onActivate():Void log(key, 'enter');
-	public function onDeactivate():Void log(key, 'exit');
+	override function onActivate():Void log(key, 'enter');
+	override function onDeactivate():Void log(key, 'exit');
 }
